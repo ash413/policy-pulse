@@ -1,8 +1,10 @@
-const express = require('express')
+const express = require('express');
 const { authMiddleware } = require('../middleware/authMiddleware')
 const { User } = require('../database/db')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+
+const { signupSchema, loginSchema } = require('../utils/userValidation')
 
 require('dotenv').config()
 const SECRET_KEY = process.env.SECRET_KEY
@@ -13,26 +15,30 @@ const router = express.Router()
 // new user signup
 router.post('/auth/signup', async(req, res) => {
     try {
-        const { name, email, username, password } = req.body
-        if (!name ||!email|| !username || !password){
-            return res.status(400).json({
-                message: "All fields are required."
-            })
-        }
-        const existingUser = await User.findOne({ email }, { username } );
+
+        const validatedData = signupSchema.parse(req.body);
+        const { name, username, email, password } = validatedData;
+
+        const existingUser = await User.findOne({ email });
         if ( existingUser ) {
-            return res.status(400).json({ message: "User already exists." });
+            return res.status(400).json({ message: "user already exists." });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
-        const user = new User({name, email, username, password: hashedPassword})
+        const user = new User({name, username, email, password: hashedPassword})
         await user.save()
+
         return res.status(201).json({
-            message: "User registered successfully!"
+            message: "user registered successfully!"
         })
+
     } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ message: "validation error", errors: error.errors });
+        }
+
         return res.status(400).json({
-            message: "Error signing up!",
+            message: "error signing up!",
             error: error.message
         })
     }
@@ -41,29 +47,40 @@ router.post('/auth/signup', async(req, res) => {
 // user login
 router.post('/auth/login', async(req, res) => {
     try {
-        const { email, password } = req.body;
+
+        const validatedData = loginSchema.parse(req.body);
+        const { email, password } = validatedData;
+
         const user = await User.findOne({ email });
         if (!user){ 
             return res.status(404).json({
-                message: "No user with these credentials"
+                message: "no user with these credentials"
             })
         }
+
         const isMatch = await bcrypt.compare(password, user.password)
         if (!isMatch){ 
             return res.status(404).json({
-                message: "Invalid credentials!"
+                message: "invalid credentials!"
             })
         }
+
         const token = jwt.sign(
             {id:user._id, username: user.username}, 
             SECRET_KEY, 
             {expiresIn: '3h'}
         )
+
         return res.json({
-            message: "Login successful!",
+            message: "login successful!",
             token: token
         })
+
     } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ message: "validation error", errors: error.errors });
+        }
+
         return res.status(400).json({
             message: "Error loging in!",
             error: error.message

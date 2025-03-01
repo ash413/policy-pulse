@@ -1,5 +1,6 @@
 const express = require('express')
 const { authMiddleware } = require('../middleware/authMiddleware')
+const { adminMiddleware } = require('../middleware/adminMiddleware');
 const { Reward, User } = require('../database/db')
 
 const router = express.Router()
@@ -10,7 +11,7 @@ router.get('/rewards', async(req, res) => {
     try {
         const rewards = await Reward.find({ isActive: true });
         res.status(200).json({ rewards });
-        
+
     } catch (error) {
         res.status(500).json({ message: "error fetching rewards", error });
     }
@@ -18,7 +19,7 @@ router.get('/rewards', async(req, res) => {
 
 
 //post new reward - ADMIN ONLY 
-router.post('/rewards', authMiddleware, async(req, res) => {
+router.post('/rewards', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { title, description, pointsRequired } = req.body;
         const reward = new Reward({ title, description, pointsRequired });

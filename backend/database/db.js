@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
     points: {type: Number, default: 0},
     completedQuests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Quest' }],
     redeemedRewards: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Reward' }],
+    isAdmin: {type: Boolean, default: false},
 }, {timestamps: true})
 
 const User = mongoose.model('User', userSchema)

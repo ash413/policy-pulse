@@ -1,8 +1,9 @@
-const express = require('express')
-const { authMiddleware } = require('../middleware/authMiddleware')
-const { Quest, User } = require('../database/db')
+const express = require('express');
+const { authMiddleware } = require('../middleware/authMiddleware');
+const { adminMiddleware } = require('../middleware/adminMiddleware');
+const { Quest, User } = require('../database/db');
 
-const router = express.Router()
+const router = express.Router();
 
 //get all quests
 router.get('/quests', async(req, res) => {
@@ -16,7 +17,7 @@ router.get('/quests', async(req, res) => {
 
 
 //post a quest - ADMIN ONLY 
-router.post('/quests', authMiddleware, async(req, res) => {
+router.post('/quests', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { title, description, points, type } = req.body;
         const quest = new Quest({ title, description, points, type });
@@ -35,7 +36,7 @@ router.post('/quests', authMiddleware, async(req, res) => {
 router.post('/quests/completed', authMiddleware, async(req, res) => {
     try {
         const { questId } = req.body;
-        const userId = req. userId;
+        const userId = req.userId;
         
         const quest = await Quest.findById(questId);
         if (!quest){
