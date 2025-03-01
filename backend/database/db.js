@@ -16,7 +16,9 @@ const userSchema = new mongoose.Schema({
     username: {type: String, required: true, unique: true},
     email: {type: String, required: true, unique: true},
     password: {type: String, required: true},
-    points: {type: Number, default: 0}
+    points: {type: Number, default: 0},
+    completedQuests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Quest' }],
+    redeemedRewards: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Reward' }],
 }, {timestamps: true})
 
 const User = mongoose.model('User', userSchema)
