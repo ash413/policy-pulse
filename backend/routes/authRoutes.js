@@ -3,6 +3,7 @@ const { authMiddleware } = require('../middleware/authMiddleware')
 const { User } = require('../database/db')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const z = require('zod'); 
 
 const { signupSchema, loginSchema } = require('../utils/userValidation')
 
@@ -17,7 +18,7 @@ router.post('/auth/signup', async(req, res) => {
     try {
 
         const validatedData = signupSchema.parse(req.body);
-        const { name, username, email, password } = validatedData;
+        const { email, password } = validatedData;
 
         const existingUser = await User.findOne({ email });
         if ( existingUser ) {
@@ -25,11 +26,19 @@ router.post('/auth/signup', async(req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
-        const user = new User({name, username, email, password: hashedPassword})
+        const user = new User({email, password: hashedPassword})
         await user.save()
 
+        //generate new token
+        const token = jwt.sign(
+            {id: user._id},
+            SECRET_KEY,
+            {expiresIn: '3h'}
+        );
+
         return res.status(201).json({
-            message: "user registered successfully!"
+            message: "user registered successfully!",
+            token: token
         })
 
     } catch (error) {
@@ -66,7 +75,7 @@ router.post('/auth/login', async(req, res) => {
         }
 
         const token = jwt.sign(
-            {id:user._id, username: user.username}, 
+            {id:user._id}, 
             SECRET_KEY, 
             {expiresIn: '3h'}
         )

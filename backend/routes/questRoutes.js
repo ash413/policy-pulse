@@ -6,10 +6,18 @@ const { Quest, User } = require('../database/db');
 const router = express.Router();
 
 //get all quests
-router.get('/quests', async(req, res) => {
+router.get('/quests', authMiddleware, async(req, res) => {
     try {
-        const quests = await Quest.find({isActive: true})
+        const userId = req.userId;
+        const user = await User.findById(userId);
+
+        const quests = await Quest.find({
+            isActive: true,
+            _id: { $nin: user.completedQuests }
+        })
+
         res.status(200).json({ quests });
+
     } catch (error) {
         res.status(500).json({ message: "Error fetching quests", error });
     }
@@ -48,23 +56,33 @@ router.post('/quests/completed', authMiddleware, async(req, res) => {
         user.completedQuests.push(questId);
         await user.save();
 
+        const userResponse = user.toObject();
+        delete userResponse.password;
+
         res.status(200).json({
             message: "Quest completed successfully!",
-            user
+            user: userResponse
         })
 
     } catch (error) {
-        res.status(500).json({ message: "Error marking quest complete", error });
+        res.status(500).json({ 
+            message: "Error marking quest complete", 
+            error 
+        });
     }
 })
 
 
 // show completed quests by user
-router.get('/quests/user', authMiddleware, async (req, res) => {
+router.get('/quests/completedQuests', authMiddleware, async (req, res) => {
     try {
         const userId = req.userId;
-        const user = await User.findById(userId).populate('completedQuests');
+        const user = await User.findById(userId)
+                            .select('-password')
+                            .populate('completedQuests');
+        
         res.status(200).json({ completedQuests: user.completedQuests });
+
     } catch (error) {
         res.status(500).json({ message: "Error fetching user quests", error });
     }

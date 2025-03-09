@@ -9,12 +9,11 @@ const authRoutes = require('./routes/authRoutes');
 const questRoutes = require('./routes/questRoutes');
 const rewardRoutes = require('./routes/rewardRoutes');
 const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes')
 
 
 app.use(cors({
-    origin: [
-        'http://localhost:3000'
-    ],
+    origin: "http://localhost:3000",
     methods: ['POST', 'GET', 'PUT', 'DELETE'],
     credentials: true
 }));
@@ -36,6 +35,7 @@ app.use('/', authRoutes);
 app.use('/', questRoutes);
 app.use('/', rewardRoutes);
 app.use('/', userRoutes);
+app.use('/', adminRoutes)
 
 connectToDatabase().then(() => {
     const PORT = process.env.PORT || 8000

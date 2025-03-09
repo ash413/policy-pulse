@@ -10,6 +10,7 @@ router.get('/user/profile', authMiddleware, async (req, res) => {
     try {
         const userId = req.userId;
         const user = await User.findById(userId)
+            .select('-password')
             .populate('completedQuests')
             .populate('redeemedRewards');
 
@@ -31,7 +32,7 @@ router.put('/user/profile', authMiddleware, async (req, res) => {
             userId,
             { name, email },
             { new: true }
-        );
+        ).select('-password');
 
         res.status(200).json({ message: "profile updated successfully!", user });
 
@@ -44,7 +45,8 @@ router.put('/user/profile', authMiddleware, async (req, res) => {
 //leaderboard
 router.get('/leaderboard', async (req, res) => {
     try {
-        const users = await User.find({})
+        const users = await User.find({ isAdmin: false })
+            .select('-password')
             .sort({ points: -1 })
             .limit(10);
 
