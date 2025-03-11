@@ -2,6 +2,7 @@ const express = require('express');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { adminMiddleware } = require('../middleware/adminMiddleware');
 const { Quest, User } = require('../database/db');
+const mlService = require('../services/mlService');
 
 const router = express.Router();
 
@@ -85,6 +86,25 @@ router.get('/quests/completedQuests', authMiddleware, async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: "Error fetching user quests", error });
+    }
+});
+
+
+
+//personalized quest recommendations
+router.get('/quests/recommended', authMiddleware, async(req, res) => {
+    try {
+        const userId = req.userId;
+        
+        const recommendedQuests = await mlService.getRecommendations(userId);
+        
+        res.status(200).json({ recommendedQuests });
+    } catch (error) {
+        console.error('Error getting recommendations:', error);
+        res.status(500).json({ 
+            message: "Error fetching recommended quests", 
+            error: error.message 
+        });
     }
 });
 
